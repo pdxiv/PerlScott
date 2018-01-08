@@ -521,7 +521,7 @@ my @command_function = (
     # 11 FINI
     sub {
         my $action_id = shift;
-        exit;
+        exit 0;
     },
 
     # 12 DspRM
@@ -554,7 +554,7 @@ my @command_function = (
           or croak;
         if ( $stored_treasures == $number_of_treasures ) {
             print "Well done.\n" or croak;
-            goto COMMAND_END_OF_GAME;
+            exit 0;
         }
     },
 
@@ -750,11 +750,50 @@ my @command_function = (
 
 );
 
+# For command hints. If commands only rely on static data, probably not useful
+my @command_relies_on_dynamic_data = (
+    1,    #  0 GETx
+    1,    #  1 DROPx
+    1,    #  2 GOTOy
+    1,    #  3 x->RM0
+    1,    #  4 NIGHT
+    1,    #  5 DAY
+    1,    #  6 SETz
+    1,    #  7 x->RM0
+    1,    #  8 CLRz
+    1,    #  9 DEAD
+    1,    # 10 x->y
+    1,    # 11 FINI
+    0,    # 12 DspRM
+    1,    # 13 SCORE
+    0,    # 14 INV
+    1,    # 15 SET0
+    1,    # 16 CLR0
+    1,    # 17 FILL
+    0,    # 18 CLS
+    0,    # 19 SAVE
+    1,    # 20 EXx,x
+    0,    # 21 CONT
+    1,    # 22 AGETx
+    1,    # 23 BYx<-x
+    0,    # 24 DspRM
+    1,    # 25 CT-1
+    0,    # 26 DspCT
+    1,    # 27 CT<-n
+    1,    # 28 EXRM0
+    1,    # 29 EXm,CT
+    1,    # 30 CT+n
+    1,    # 31 CT-n
+    0,    # 32 SAYw
+    0,    # 33 SAYwCR
+    0,    # 34 SAYCR
+    1,    # 35 EXc,CT
+    0,    # 36 DELAY
+);
+
 $command_or_display_message = 0;
 
 load_game_data_file();    # Load game data file
-
-START_GAME:;
 
 # Initialize values
 $current_room = $starting_room;    # Set current room to starting room
@@ -787,6 +826,9 @@ while (1) {
             show_room_description();
         }
     }
+    elsif ( $keyboard_input_2 =~ /^\s*SHOW\s*HINT/msxi ) {
+        show_hints();
+    }
     else {
 
         extract_words();
@@ -799,15 +841,50 @@ while (1) {
             print "You use word(s) i don't know\n" or croak;
         }
         else {
-
             run_actions( $found_word[0], $found_word[1] );
             check_and_change_light_source_status();
             $found_word[0] = 0;
-
             run_actions( $found_word[0], $found_word[1] );
-
         }
     }
+}
+
+sub show_hints {
+    print "DEBUG: showing hints...\n" or croak;
+    my $current_action = 0;
+    foreach (@action_data) {
+        my $action_verb = get_action_verb($current_action);
+        my $action_noun = get_action_noun($current_action);
+
+        # Is it a word action?
+        if ( $action_verb > 0 ) {
+            my $empty_condition = 1;
+
+            my $condition = 1;
+            while ( $condition <= $CONDITIONS ) {
+                my $condition_code =
+                  get_condition_code( $current_action, $condition );
+                if ( $condition_code > 0 ) {
+                    $empty_condition = 0;
+                }
+                $condition++;
+            }
+            if ( !$empty_condition ) {
+
+                # Do the conditions of the action evaluate successfully?
+                if ( evaluate_conditions($current_action) ) {
+                    print "DEBUG: Action $current_action, "
+                      . "verb $list_of_verbs_and_nouns[$action_verb][0], "
+                      . "noun $list_of_verbs_and_nouns[$action_noun][1], "
+                      . "comment $action_description[$current_action]\n"
+                      or croak;
+                    command_relies_on_modifiable_data($current_action);
+                }
+            }
+        }
+        $current_action++;
+    }
+    return 1;
 }
 
 sub strip_noun_from_object_description {
@@ -1106,8 +1183,8 @@ sub load_game_data_file {
 }
 
 sub cls {
-    print "\033[2J"   or croak;                   # Clear the screen
-    print "\033[0;0H" or croak;                   # Jump to coordinate 0,0
+    print "\e[2J"   or croak;                     # Clear the screen
+    print "\e[0;0H" or croak;                     # Jump to coordinate 0,0
     return $TRUE;
 }
 
@@ -1240,7 +1317,7 @@ sub debug_print_pretty_table_from_array {
 }
 
 sub debug_print_registers {
-    print "\033[41m" or croak;    # Change color
+    print "\e[41m" or croak;    # Change color
 
     print "\nCurrent room: $current_room\n" or croak;
     print "Alternate room registers:\n"     or croak;
@@ -1255,7 +1332,7 @@ sub debug_print_registers {
 
     print "Status flags:\n" or croak;
     debug_print_pretty_table_from_array( \@status_flag );
-    print "\033[0m" or croak;    # Restore terminal attributes
+    print "\e[0m" or croak;    # Restore terminal attributes
     return 1;
 }
 
@@ -1280,6 +1357,7 @@ sub save_game {
     open my $save_file, '>', $save_filename or croak;
     foreach (@save_data) { print {$save_file} "$_\n" or croak; }
     close $save_file or croak;
+
     # debug_print_registers();
     return $TRUE;
 }
@@ -1318,6 +1396,7 @@ sub load_game {
     foreach (@alternate_counter) { $_ = shift @save_data }
     foreach (@object_location)   { $_ = shift @save_data }
     foreach (@status_flag)       { $_ = shift @save_data }
+
     # debug_print_registers();
     return $TRUE;
 }
@@ -1333,7 +1412,7 @@ sub debug_print_actions {
 }
 
 sub debug_print_action {
-    print "\033[42m" or croak;    # Change color
+    print "\e[42m" or croak;    # Change color
     my $action_to_display = shift;
     print "Action $action_to_display $action_description[$action_to_display]\n"
       or croak;
@@ -1404,7 +1483,7 @@ sub debug_print_action {
             $command++;
         }
     }
-    print "\033[0m" or croak;    # Restore terminal attributes
+    print "\e[0m" or croak;    # Restore terminal attributes
     debug_print_registers();
     return 1;
 }
@@ -1631,29 +1710,71 @@ sub execute_commands {
     return 1;
 }
 
+sub command_relies_on_modifiable_data {
+    my $action_id = shift;
+    $command_parameter_index = 1;
+    {
+        my $command = 0;
+        while ( $command < $COMMANDS_IN_ACTION ) {
+            $command_or_display_message =
+              decode_command_from_data( $command, $action_id );
+            $command++;
+
+            # Code above 102? it's printable text!
+            if ( $command_or_display_message >= $MESSAGE_2_START ) {
+            }
+
+            # Do nothing
+            elsif ( $command_or_display_message == 0 ) { }
+
+            # Code below 52? it's printable text!
+            elsif ( $command_or_display_message <= $MESSAGE_1_END ) {
+            }
+
+            # Code above 52 and below 102? We got some command code to run!
+            else {
+                my $command_code =
+                  $command_or_display_message - $MESSAGE_1_END - 1;
+            }
+        }
+    }
+
+    # debug_print_action($action_id);
+    return 1;
+}
+
 sub evaluate_conditions {
     my $action_id         = shift;
     my $evaluation_status = 1;
     my $condition         = 1;
     while ( $condition <= $CONDITIONS ) {
-        my $condition_raw = $action_data[$action_id][$condition];
+        my $condition_code = get_condition_code( $action_id, $condition );
+        my $condition_parameter =
+          get_condition_parameter( $action_id, $condition );
 
-        # Extract condition parameter & condition code
-        my $condition_parameter = int( $condition_raw / $CONDITION_DIVISOR );
-        my $condition_code      = $condition_raw % $CONDITION_DIVISOR;
-
-        if ( &{ $condition_function[$condition_code] }($condition_parameter) ) {
-
-        }
-        else {
-
+        if ( !&{ $condition_function[$condition_code] }($condition_parameter) )
+        {
             # Stop evaluating conditions if false. One fails all.
             $evaluation_status = 0;
             last;
         }
-
         $condition++;
     }
-
     return $evaluation_status;
+}
+
+sub get_condition_code {
+    my $action_id      = shift;
+    my $condition      = shift;
+    my $condition_raw  = $action_data[$action_id][$condition];
+    my $condition_code = $condition_raw % $CONDITION_DIVISOR;
+    return $condition_code;
+}
+
+sub get_condition_parameter {
+    my $action_id           = shift;
+    my $condition           = shift;
+    my $condition_raw       = $action_data[$action_id][$condition];
+    my $condition_parameter = int( $condition_raw / $CONDITION_DIVISOR );
+    return $condition_parameter;
 }
