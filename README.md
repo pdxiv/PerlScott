@@ -8,5 +8,5 @@ The 4.6 version in Byte Magazine doesn't support many of the features in latest 
 - Numerical counters, and required conditions and commands for using them
 - Alternate room registers, and required commands for using them
 - Commands for printing the entered noun, and for printing a newline
-- Command for "waiting" for one second (for dramatical effect, one might assume)
+- Command for "waiting" for one second (for dramatical effect, presumably)
 - Conditions for determining if an object is in its' starting location or not
