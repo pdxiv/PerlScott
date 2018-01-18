@@ -42,16 +42,15 @@ my ( $keyboard_input, $keyboard_input_2 );
 my (
     $carried_objects,     $command_or_display_message,
     $command_parameter,   $command_parameter_index,
-    $condition_raw_data,  $cont_flag,
-    $counter_register,    $current_room,
-    $global_noun,         $max_objects_carried,
-    $number_of_actions,   $number_of_messages,
-    $number_of_objects,   $number_of_rooms,
-    $number_of_treasures, $number_of_words,
-    $starting_room,       $stored_treasures,
-    $time_limit,          $treasure_room_id,
-    $word_length,         $adventure_version,
-    $adventure_number,
+    $cont_flag,           $counter_register,
+    $current_room,        $global_noun,
+    $max_objects_carried, $number_of_actions,
+    $number_of_messages,  $number_of_objects,
+    $number_of_rooms,     $number_of_treasures,
+    $number_of_words,     $starting_room,
+    $stored_treasures,    $time_limit,
+    $treasure_room_id,    $word_length,
+    $adventure_version,   $adventure_number,
 );
 my ( @alternate_counter, @alternate_room );
 
@@ -62,202 +61,6 @@ my ( @action_data, @action_description, @object_original_location,
     @object_location, @found_word, @room_exit, @status_flag );
 
 $cont_flag = 0;
-
-# For debugging conditions
-my @condition_descriptions = (
-    qw(PAR),                  #  0 Par
-    qw(HAS),                  #  1 HAS
-    qw(IN_ROOM_WITH),         #  2 IN/W
-    qw(AVAILABLE),            #  3 AVL
-    qw(IN_ROOM),              #  4 IN
-    qw(NOT_IN_ROOM_WITH),     #  5 -IN/W
-    qw(NOT_HAVE),             #  6 -HAVE
-    qw(NOT_IN_ROOM),          #  7 -IN
-    qw(BIT),                  #  8 BIT
-    qw(NOT_BIT),              #  9 -BIT
-    qw(ANY),                  # 10 ANY
-    qw(NOT_ANY),              # 11 -ANY
-    qw(NOT_AVAILABLE),        # 12 -AVL
-    qw(NOT_OBJECT_ROOM_0),    # 13 -RM0
-    qw(OBJECT_ROOM_0),        # 14 RM0
-
-    # Newer post-1978 conditions below
-    qw(COUNTER_LE),             # 15 CT<=
-    qw(COUNTER_GT),             # 16 CT>
-    qw(OBJECT_IN_START),        # 17 ORIG
-    qw(OBJECT_NOT_IN_START),    # 18 -ORIG
-    qw(COUNTER_EQ),             # 19 CT=
-);
-
-# For debugging commands
-my @command_description = (
-    qw(GET_OBJECT_X),                   #  0 GETx
-    qw(DROP_OBJECT_X),                  #  1 DROPx
-    qw(GO_TO_ROOM_Y),                   #  2 GOTOy
-    qw(SEND_OBJECT_X_TO_ROOM_0),        #  3 x->RM0
-    qw(SET_NIGHT),                      #  4 NIGHT
-    qw(SET_DAY),                        #  5 DAY
-    qw(SET_FLAG_Z),                     #  6 SETz
-    qw(SEND_OBJECT_X_TO_ROOM_0),        #  7 x->RM0
-    qw(CLEAR_FLAG_Z),                   #  8 CLRz
-    qw(DIE),                            #  9 DEAD
-    qw(SEND_OBJECT_X_TO_ROOM_Y),        # 10 x->y
-    qw(END_OF_GAME),                    # 11 FINI
-    qw(show_room_description),          # 12 DspRM
-    qw(SHOW_SCORE),                     # 13 SCORE
-    qw(SHOW_INVENTORY),                 # 14 INV
-    qw(SET_FLAG_0),                     # 15 SET0
-    qw(CLEAR_FLAG_0),                   # 16 CLR0
-    qw(FILL),                           # 17 FILL
-    qw(CLEAR_SCREEN),                   # 18 CLS
-    qw(SAVE_GAME),                      # 19 SAVE
-    qw(SWAP_OBJECT_X_WITH_OBJECT_X),    # 20 EXx,x
-    qw(CONTINUE),                       # 21 CONT
-    qw(ALWAYS_GET_OBJECT_X),            # 22 AGETx
-    qw(SEND_OBJECT_X_TO_SAME_AS_X),     # 23 BYx<-x
-    qw(show_room_description),          # 24 DspRM
-
-    # Newer post-1978 commands below
-    qw(DECREMENT_COUNTER),                # 25 CT-1
-    qw(DISPLAY_COUNTER),                  # 26 DspCT
-    qw(SET_COUNTER_TO_PAR_1),             # 27 CT<-n
-    qw(SWAP_ROOM_WITH_ROOM_REG_0),        # 28 EXRM0
-    qw(SWAP_COUNTER_WITH_PAR_1),          # 29 EXm,CT
-    qw(ADD_PAR_1_TO_COUNTER),             # 30 CT+n
-    qw(SUB_PAR_1_FROM_COUNTER),           # 31 CT-n
-    qw(PRINT_NOUN),                       # 32 SAYw
-    qw(PRINT_NOUN_AND_NEWLINE),           # 33 SAYwCR
-    qw(PRINT_NEWLINE),                    # 34 SAYCR
-    qw(SWAP_ROOM_WITH_PAR_1_ROOM_REG),    # 35 EXc,CT
-    qw(WAIT_1_SECOND),                    # 36 DELAY
-
-    # Commands 37-49 are undefined
-);
-
-# For debugging
-my @resolve_condition_data = (
-
-    #  0 Par
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    #  1 HAS
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    #  2 IN/W
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    #  3 AVL
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    #  4 IN
-    sub {
-        my $parameter = shift;
-        return $room_description[$parameter];
-    },
-
-    #  5 -IN/W
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    #  6 -HAVE
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    #  7 -IN
-    sub {
-        my $parameter = shift;
-        return $room_description[$parameter];
-    },
-
-    #  8 BIT
-    sub {
-        my $parameter = shift;
-    },
-
-    #  9 -BIT
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 10 ANY
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 11 -ANY
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 12 -AVL
-    sub {
-        my $parameter = shift;
-        return $object_description[$parameter];
-    },
-
-    # 13 -RM0
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 14 RM0
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # Newer post-1978 conditions below
-
-    # 15 CT<=
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 16 CT>
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 17 ORIG
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 18 -ORIG
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-
-    # 19 CT=
-    sub {
-        my $parameter = shift;
-        return $parameter;
-    },
-);
 
 # Code for all the action conditions
 my @condition_function = (
@@ -750,47 +553,6 @@ my @command_function = (
 
 );
 
-# For command hints. If commands only rely on static data, probably not useful
-my @command_relies_on_dynamic_data = (
-    1,    #  0 GETx
-    1,    #  1 DROPx
-    1,    #  2 GOTOy
-    1,    #  3 x->RM0
-    1,    #  4 NIGHT
-    1,    #  5 DAY
-    1,    #  6 SETz
-    1,    #  7 x->RM0
-    1,    #  8 CLRz
-    1,    #  9 DEAD
-    1,    # 10 x->y
-    1,    # 11 FINI
-    0,    # 12 DspRM
-    1,    # 13 SCORE
-    0,    # 14 INV
-    1,    # 15 SET0
-    1,    # 16 CLR0
-    1,    # 17 FILL
-    0,    # 18 CLS
-    0,    # 19 SAVE
-    1,    # 20 EXx,x
-    0,    # 21 CONT
-    1,    # 22 AGETx
-    1,    # 23 BYx<-x
-    0,    # 24 DspRM
-    1,    # 25 CT-1
-    0,    # 26 DspCT
-    1,    # 27 CT<-n
-    1,    # 28 EXRM0
-    1,    # 29 EXm,CT
-    1,    # 30 CT+n
-    1,    # 31 CT-n
-    0,    # 32 SAYw
-    0,    # 33 SAYwCR
-    0,    # 34 SAYCR
-    1,    # 35 EXc,CT
-    0,    # 36 DELAY
-);
-
 $command_or_display_message = 0;
 
 load_game_data_file();    # Load game data file
@@ -806,8 +568,6 @@ $alternate_counter[$COUNTER_TIME_LIMIT] = $time_limit;  # Set time limit counter
 
 show_intro();                                           # Show intro
 show_room_description();                                # Show room
-
-# debug_print_actions();
 
 # Process auto action_data before starting main keyboard input loop
 $found_word[0] = 0;
@@ -825,9 +585,6 @@ while (1) {
         if ( load_game() ) {
             show_room_description();
         }
-    }
-    elsif ( $keyboard_input_2 =~ /^\s*SHOW\s*HINT/msxi ) {
-        show_hints();
     }
     else {
 
@@ -847,44 +604,6 @@ while (1) {
             run_actions( $found_word[0], $found_word[1] );
         }
     }
-}
-
-sub show_hints {
-    print "DEBUG: showing hints...\n" or croak;
-    my $current_action = 0;
-    foreach (@action_data) {
-        my $action_verb = get_action_verb($current_action);
-        my $action_noun = get_action_noun($current_action);
-
-        # Is it a word action?
-        if ( $action_verb > 0 ) {
-            my $empty_condition = 1;
-
-            my $condition = 1;
-            while ( $condition <= $CONDITIONS ) {
-                my $condition_code =
-                  get_condition_code( $current_action, $condition );
-                if ( $condition_code > 0 ) {
-                    $empty_condition = 0;
-                }
-                $condition++;
-            }
-            if ( !$empty_condition ) {
-
-                # Do the conditions of the action evaluate successfully?
-                if ( evaluate_conditions($current_action) ) {
-                    print "DEBUG: Action $current_action, "
-                      . "verb $list_of_verbs_and_nouns[$action_verb][0], "
-                      . "noun $list_of_verbs_and_nouns[$action_noun][1], "
-                      . "comment $action_description[$current_action]\n"
-                      or croak;
-                    command_relies_on_modifiable_data($current_action);
-                }
-            }
-        }
-        $current_action++;
-    }
-    return 1;
 }
 
 sub strip_noun_from_object_description {
@@ -1060,8 +779,7 @@ sub decode_command_from_data {
         $command_code =
           $action_data[$action_id][$merged_command_index] -
           int( $action_data[$action_id][$merged_command_index] /
-              $COMMAND_CODE_DIVISOR ) *
-          $COMMAND_CODE_DIVISOR;
+              $COMMAND_CODE_DIVISOR ) * $COMMAND_CODE_DIVISOR;
     }
     else {
 
@@ -1262,80 +980,6 @@ sub extract_words {
     return 1;
 }
 
-# Used when iterating through action_data. Implied that you first run a verb
-# and noun pass, and then do an auto pass. (How is this supposed to work?)
-sub verb_noun_valid {
-
-    # Input 1: reference to array with word numbers
-    # Input 2: verb from action
-    # Input 3: noun from action
-    # Returns: true or false
-    my $found_word = shift;
-    my $verb_word  = shift;
-    my $noun_word  = shift;
-    my $status     = 0;
-    if ( ${$found_word}[0] == 0 ) {    # Auto action
-        if ( int( $PERCENT_UNITS * rand ) < $noun_word ) {
-            $status = 1;
-        }
-    }
-    else {                             # Phrase action
-        if ( ${$found_word}[0] == $verb_word ) {
-            if ( $noun_word == 0 ) {
-                $status = 1;
-            }
-            elsif ( ${$found_word}[1] == $noun_word ) {
-                $status = 1;
-            }
-        }
-    }
-    return $status;
-}
-
-sub debug_print_pretty_table_from_array {
-    my $array_reference = shift;
-    my $max_length      = length scalar @{$array_reference};
-    foreach ( @{$array_reference} ) {
-        my $array_entry_length = length;
-        if ( $array_entry_length > $max_length ) {
-            $max_length = $array_entry_length;
-        }
-    }
-    $max_length++;
-    my $array_counter = 0;
-    foreach ( @{$array_reference} ) {
-        printf "\% ${max_length}d", $array_counter;
-        $array_counter++;
-    }
-    print "\n" or croak;
-    foreach ( @{$array_reference} ) {
-        printf "\% ${max_length}d", $_;
-        $array_counter++;
-    }
-    print "\n" or croak;
-    return 1;
-}
-
-sub debug_print_registers {
-    print "\e[41m" or croak;    # Change color
-
-    print "\nCurrent room: $current_room\n" or croak;
-    print "Alternate room registers:\n"     or croak;
-    debug_print_pretty_table_from_array( \@alternate_room );
-
-    print "Counter register: $counter_register\n" or croak;
-    print "Alternate counter registers:\n"        or croak;
-    debug_print_pretty_table_from_array( \@alternate_counter );
-
-    print "Object locations:\n" or croak;
-    debug_print_pretty_table_from_array( \@object_location );
-
-    print "Status flags:\n" or croak;
-    debug_print_pretty_table_from_array( \@status_flag );
-    print "\e[0m" or croak;    # Restore terminal attributes
-    return 1;
-}
-
 sub save_game {
 
     print "Name of save file:\n" or croak;
@@ -1358,7 +1002,6 @@ sub save_game {
     foreach (@save_data) { print {$save_file} "$_\n" or croak; }
     close $save_file or croak;
 
-    # debug_print_registers();
     return $TRUE;
 }
 
@@ -1397,95 +1040,7 @@ sub load_game {
     foreach (@object_location)   { $_ = shift @save_data }
     foreach (@status_flag)       { $_ = shift @save_data }
 
-    # debug_print_registers();
     return $TRUE;
-}
-
-sub debug_print_actions {
-    print "*************************************\n" or croak;
-    my $current_action = 0;
-    while ( $current_action <= $number_of_actions ) {
-        debug_print_action($current_action);
-        $current_action++;
-    }
-    return 1;
-}
-
-sub debug_print_action {
-    print "\e[42m" or croak;    # Change color
-    my $action_to_display = shift;
-    print "Action $action_to_display $action_description[$action_to_display]\n"
-      or croak;
-    {
-        # WORD DECODING ****************************************************
-        my $verb_word_id =
-          int( $action_data[$action_to_display][0] / $COMMAND_CODE_DIVISOR );
-        my $noun_word_id =
-          $action_data[$action_to_display][0] -
-          $verb_word_id * $COMMAND_CODE_DIVISOR;
-
-        if ( $verb_word_id > 0 ) {
-            print '    Words: '
-              . $list_of_verbs_and_nouns[$verb_word_id][0] . ', '
-              . $list_of_verbs_and_nouns[$noun_word_id][1] . "\n"
-              or croak;
-        }
-        else {
-            print '    Words: '
-              . $list_of_verbs_and_nouns[$verb_word_id][0] . ', '
-              . $noun_word_id . "\n"
-              or croak;
-        }
-    }
-
-    {
-        # CONDITION DECODING ***********************************************
-        my $condition = 1;
-        while ( $condition <= $CONDITIONS ) {
-            $condition_raw_data = $action_data[$action_to_display][$condition];
-
-            # Extract condition parameter & condition code
-            my $condition_parameter =
-              int( $condition_raw_data / $CONDITION_DIVISOR );
-
-            my $condition_code = $condition_raw_data % $CONDITION_DIVISOR;
-            print
-"    Condition $condition: \"$condition_descriptions[$condition_code]\" with parameter $condition_parameter \""
-              . &{ $resolve_condition_data[$condition_code] }
-              ($condition_parameter) . "\"\n"
-              or croak;
-
-            $condition++;
-        }
-    }
-
-    {
-        # COMMAND DECODING *************************************************
-        my $command = 0;
-        while ( $command < $COMMANDS_IN_ACTION ) {
-            my $command_code =
-              decode_command_from_data( $command, $action_to_display );
-            if ( $command_code <= $MESSAGE_1_END ) {
-                print
-"    Command $command: $command_code $message[$command_code]\n"
-                  or croak;
-            }
-            elsif ( $command_code >= $MESSAGE_2_START ) {
-                print
-"    Command $command: $command_code $message[$command_code - $MESSAGE_1_END + 1 ]\n"
-                  or croak;
-            }
-            else {
-                print
-"    Command $command: $command_code $command_description[$command_code - $MESSAGE_1_END - 1 ]\n"
-                  or croak;
-            }
-            $command++;
-        }
-    }
-    print "\e[0m" or croak;    # Restore terminal attributes
-    debug_print_registers();
-    return 1;
 }
 
 sub run_actions {
@@ -1650,12 +1205,6 @@ sub get_or_drop_noun {
     return $FALSE;
 }
 
-# Vi borde ha en funktion som returnerar det första objektet i ett rum som
-# matchar ett substantiv.
-# Input: room_id, noun
-# Output: object_id (returnera -1 om inget objekt matchar)
-# Kod för den funktionen, finns redan i "handle_carry_and_drop_verb()"
-
 sub get_action_verb {
     my $action_id = shift;
     return int( $action_data[$action_id][0] / $COMMAND_CODE_DIVISOR );
@@ -1700,46 +1249,12 @@ sub execute_commands {
                   $command_or_display_message - $MESSAGE_1_END - 1;
 
                 # Launch execution of action commands
-                &{ $command_function[$command_code] }
-                  ( $action_id, \$continue_executing_commands );
+                &{ $command_function[$command_code] }( $action_id,
+                    \$continue_executing_commands );
             }
         }
     }
 
-    # debug_print_action($action_id);
-    return 1;
-}
-
-sub command_relies_on_modifiable_data {
-    my $action_id = shift;
-    $command_parameter_index = 1;
-    {
-        my $command = 0;
-        while ( $command < $COMMANDS_IN_ACTION ) {
-            $command_or_display_message =
-              decode_command_from_data( $command, $action_id );
-            $command++;
-
-            # Code above 102? it's printable text!
-            if ( $command_or_display_message >= $MESSAGE_2_START ) {
-            }
-
-            # Do nothing
-            elsif ( $command_or_display_message == 0 ) { }
-
-            # Code below 52? it's printable text!
-            elsif ( $command_or_display_message <= $MESSAGE_1_END ) {
-            }
-
-            # Code above 52 and below 102? We got some command code to run!
-            else {
-                my $command_code =
-                  $command_or_display_message - $MESSAGE_1_END - 1;
-            }
-        }
-    }
-
-    # debug_print_action($action_id);
     return 1;
 }
 
