@@ -536,7 +536,7 @@ my @command_function = (
         print "\n" or croak;
     },
 
-    # 35 EXc,CT
+    # 35 EXc,CR
     sub {
         my $action_id = shift;
         get_command_parameter($action_id);
