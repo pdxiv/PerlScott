@@ -6,7 +6,7 @@ Fully functioning (hopefully) Scott Adams adventure game interpreter, written in
 
 ## Development background of the interpreter
 
-This was painstakingly converted to Perl from the version 4.6 TRS-80 Level II Basic source code, which was published in the December 1980 issue of Byte Magazine (page 192). Perl was chosen as the language to use, because it had the most variation in possible syntax, allowing you to write both "basic style" code which could then gradually be refactored to a more structured code style.
+This was painstakingly converted to Perl from the version 4.6 TRS-80 Level II Basic source code, which was published in the December 1980 issue of Byte Magazine (page 192). Perl was chosen as the language to use, because it had the most variation in possible syntax, allowing you to write both "basic style" code initially and more structured code as the code was gradually refactored.
 
 ## Changes from the original
 
