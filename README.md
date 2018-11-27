@@ -23,3 +23,5 @@ Additions:
 - Commands for printing the entered noun, and for printing a newline
 - Command for "waiting" for one second (for dramatical effect, presumably)
 - Conditions for determining if an object is in its' starting location or not
+- Hard-coded full direction noun text for games (such as #4 Voodoo Castle) that don't have full text filled in
+- Replace \` with " for quotes
