@@ -10,7 +10,7 @@ This was painstakingly converted to Perl from the version 4.6 TRS-80 Level II Ba
 
 ## Changes from the original
 
-The 4.6 version in Byte Magazine doesn't support many of the features in latest versions of the engine (8.3?). To play games newer than "Adventureland" and "Pirate Adventure", some changes and additions needed to be made.
+The 4.6 version in Byte Magazine doesn't support many of the features in latest versions of the engine (8.5?). To play games newer than "Adventureland" and "Pirate Adventure", some changes and additions needed to be made.
 
 Changes:
 
