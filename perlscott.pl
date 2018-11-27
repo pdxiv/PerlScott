@@ -636,7 +636,7 @@ sub check_and_change_light_source_status {
 sub show_intro {
     cls();
     my $intro_message = <<'END_MESSAGE';
-     ***   Welcome to Adventure Land. (#4.6) ***
+     *** Welcome ***
 
  Unless told differently you must find *treasures* and-return-them-to-their-proper--place!
 
