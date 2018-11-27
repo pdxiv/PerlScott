@@ -35,6 +35,7 @@ Readonly::Scalar my $ALTERNATE_ROOM_REGISTERS => 6;
 Readonly::Scalar my $ALTERNATE_COUNTERS       => 9;
 Readonly::Scalar my $STATUS_FLAGS             => 32;
 Readonly::Scalar my $MINIMUM_COUNTER_VALUE    => -1;
+Readonly::Array my @DIRECTION_NOUN_TEXT => qw( NORTH SOUTH EAST WEST UP DOWN );
 
 my $game_file = shift @ARGV;
 
@@ -705,7 +706,7 @@ sub show_room_description {
                     print 'Obvious exits: ' or croak;
                     $exit_found = $TRUE;
                 }
-                print $list_of_verbs_and_nouns[ $direction + 1 ][1] . q{ }
+                print $DIRECTION_NOUN_TEXT[$direction] . q{ }
                   or croak;
             }
             $direction++;
