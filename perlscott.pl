@@ -896,6 +896,12 @@ sub load_game_data_file {
     }
     $adventure_version = read_number($handle);    # Interpreter version
     $adventure_number  = read_number($handle);    # Adventure number
+
+    # Replace Ascii 96 with Ascii 34 in output text strings
+    foreach ( ( @object_description, @message, @room_description ) ) {
+        s/`/"/msxg;
+    }
+
     close $handle or croak;
 
     return 1;
