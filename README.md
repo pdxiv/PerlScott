@@ -15,6 +15,8 @@ The 4.6 version in Byte Magazine doesn't support many of the features in latest 
 Changes:
 
 - Game data file loading changed to accomodate the newer "standard" format files
+- Replace \` with " for quotes
+- Removed references to Adventure Land #4.6, since the Perl interpreter is different enough to make it meaningless
 
 Additions:
 
@@ -24,4 +26,3 @@ Additions:
 - Command for "waiting" for one second (for dramatical effect, presumably)
 - Conditions for determining if an object is in its' starting location or not
 - Hard-coded full direction noun text for games (such as #4 Voodoo Castle) that don't have full text filled in
-- Replace \` with " for quotes
