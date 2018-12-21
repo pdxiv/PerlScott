@@ -79,6 +79,7 @@ my $time_limit;
 my $number_of_messages;
 my $treasure_room_id;
 my @action_data;
+my @list_of_verbs_and_nouns;
 ( $game_bytes,          $next ) = $next =~ /$number_pattern/msxs;
 ( $number_of_objects,   $next ) = $next =~ /$number_pattern/msxs;
 ( $number_of_actions,   $next ) = $next =~ /$number_pattern/msxs;
@@ -91,19 +92,6 @@ my @action_data;
 ( $time_limit,          $next ) = $next =~ /$number_pattern/msxs;
 ( $number_of_messages,  $next ) = $next =~ /$number_pattern/msxs;
 ( $treasure_room_id,    $next ) = $next =~ /$number_pattern/msxs;
-
-print "*** $game_bytes\n";
-print "*** $number_of_objects\n";
-print "*** $number_of_actions\n";
-print "*** $number_of_words\n";
-print "*** $number_of_rooms\n";
-print "*** $max_objects_carried\n";
-print "*** $starting_room\n";
-print "*** $number_of_treasures\n";
-print "*** $word_length\n";
-print "*** $time_limit\n";
-print "*** $number_of_messages\n";
-print "*** $treasure_room_id\n";
 
 # Actions
 {
@@ -122,3 +110,13 @@ print "*** $treasure_room_id\n";
     }
 }
 
+# Words
+{
+    my $word = 0;
+    while ( $word < ( ( $number_of_words + 1 ) * 2 ) ) {
+        my $input;
+        ( $input, $next ) = $next =~ /$word_pattern/msxs;
+        $list_of_verbs_and_nouns[ int( $word / 2 ) ][ $word % 2 ] = $input;
+        $word++;
+    }
+}
