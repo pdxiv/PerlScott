@@ -30,13 +30,13 @@ print $file_content;
 
 # extract fields from room entry from data file
 my $room_pattern = qr{
+\s+(-?\d+)
+\s+(-?\d+)
+\s+(-?\d+)
+\s+(-?\d+)
+\s+(-?\d+)
+\s+(-?\d+)
 \s*"([^"]*)"
-\s+(-?\d+)
-\s+(-?\d+)
-\s+(-?\d+)
-\s+(-?\d+)
-\s+(-?\d+)
-\s+(-?\d+)
 (.*)
 }msxs;
 
