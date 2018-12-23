@@ -8,10 +8,42 @@ our $VERSION = '1.0.0';
 
 Readonly::Scalar my $ACTION_ENTRIES => 8;
 
+# my $game_file = '1_baton.dat';
+# my $game_file = '2_timemachine.dat';
+# my $game_file = '3_arrow1.dat';
+# my $game_file = '4_arrow2.dat';
+# my $game_file = '5_pulsar7.dat';
+# my $game_file = '6_circus.dat';
+# my $game_file = '7_feasibility.dat';
+# my $game_file = '8_akyrz.dat';
+# my $game_file = '9_perseus.dat';
+# my $game_file = 'A_tenlittleindians.dat';
+# my $game_file = 'adv01.dat';
+# my $game_file = 'adv02.dat';
+# my $game_file = 'adv03.dat';
+# my $game_file = 'adv04.dat';
+# my $game_file = 'adv05.dat';
+# my $game_file = 'adv06.dat';
+# my $game_file = 'adv07.dat';
+# my $game_file = 'adv08.dat';
+# my $game_file = 'adv09.dat';
+# my $game_file = 'adv10.dat';
+# my $game_file = 'adv11.dat';
+# my $game_file = 'adv12.dat';
+# my $game_file = 'adv13.dat';
+# my $game_file = 'adv14a.dat';
+# my $game_file = 'B_waxworks.dat';
 # my $game_file = 'BOND.DAT';
 # my $game_file = 'BURGLAR.DAT';
+# my $game_file = 'CONQUEST.DAT';
+# my $game_file = 'desert.dat';
+# my $game_file = 'GAMMA.DAT';
+# my $game_file = 'MAROONED.DAT';
 # my $game_file = 'MINER.DAT';
-my $game_file = 'adv01.dat';
+# my $game_file = 'quest1.dat';
+# my $game_file = 'romulan.dat';
+# my $game_file = 'sampler1.dat';
+# my $game_file = 'secret.dat';
 
 open my $handle, '<', $game_file or croak;
 my $file_content = do { local $INPUT_RECORD_SEPARATOR; <$handle> };
@@ -80,6 +112,8 @@ my $number_of_messages;
 my $treasure_room_id;
 my @action_data;
 my @list_of_verbs_and_nouns;
+my @room_exit;
+my @room_description;
 ( $game_bytes,          $next ) = $next =~ /$number_pattern/msxs;
 ( $number_of_objects,   $next ) = $next =~ /$number_pattern/msxs;
 ( $number_of_actions,   $next ) = $next =~ /$number_pattern/msxs;
@@ -120,3 +154,14 @@ my @list_of_verbs_and_nouns;
         $word++;
     }
 }
+
+# Rooms
+{
+    my $room = 0;
+    while ( $room <= $number_of_rooms ) {
+        ( $room_exit[$room][0], $room_exit[$room][1], $room_exit[$room][2], $room_exit[$room][3], $room_exit[$room][4], $room_exit[$room][5], $room_description[$room], $next ) = $next =~ /$room_pattern/msxs;
+        print "%%% $room/$number_of_rooms $room_description[$room]\n";
+        $room++;
+    }
+}
+
