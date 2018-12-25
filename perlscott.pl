@@ -943,11 +943,12 @@ sub extract_words {
     if ( !defined $extracted_input_words[0] ) {
         $extracted_input_words[0] = q{};
     }
-
+    
+    # Set noun to blank, if not defined
     if ( scalar @extracted_input_words < 2 ) {
         $extracted_input_words[1] = q{};
-        $global_noun = $extracted_input_words[1];
-    }    # Set noun to blank, if not defined
+    }
+    $global_noun = $extracted_input_words[1];
 
     {
         # Iterate over verbs and nouns
