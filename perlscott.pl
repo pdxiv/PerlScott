@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Readonly;
 use Carp;
+use English qw( -no_match_vars );
 our $VERSION = '1.0.0';
 
 Readonly::Scalar my $ACTION_COMMAND_OFFSET    => 6;
@@ -52,6 +53,7 @@ my (
     $stored_treasures,    $time_limit,
     $treasure_room_id,    $word_length,
     $adventure_version,   $adventure_number,
+    $game_bytes,
 );
 my ( @alternate_counter, @alternate_room );
 
@@ -780,12 +782,12 @@ sub decode_command_from_data {
         $command_code =
           $action_data[$action_id][$merged_command_index] -
           int( $action_data[$action_id][$merged_command_index] /
-              $COMMAND_CODE_DIVISOR ) * $COMMAND_CODE_DIVISOR;
+              $COMMAND_CODE_DIVISOR ) *
+          $COMMAND_CODE_DIVISOR;
     }
     else {
 
-        $command_code =
-          int( $action_data[$action_id][$merged_command_index] /
+        $command_code = int( $action_data[$action_id][$merged_command_index] /
               $COMMAND_CODE_DIVISOR );
     }
     return $command_code;
@@ -793,18 +795,68 @@ sub decode_command_from_data {
 
 sub load_game_data_file {
     open my $handle, '<', $game_file or croak;
-    my $game_bytes = read_number($handle);    # We don't care about this one
-    $number_of_objects   = read_number($handle);    # Objects
-    $number_of_actions   = read_number($handle);    # Actions
-    $number_of_words     = read_number($handle);    # Words
-    $number_of_rooms     = read_number($handle);    # Rooms
-    $max_objects_carried = read_number($handle);    # Max objects carried
-    $starting_room       = read_number($handle);    # Starting room
-    $number_of_treasures = read_number($handle);    # Treasures
-    $word_length         = read_number($handle);    # Word length
-    $time_limit          = read_number($handle);    # Time limit
-    $number_of_messages  = read_number($handle);    # Messages
-    $treasure_room_id    = read_number($handle);    # Treasure room
+    my $file_content = do { local $INPUT_RECORD_SEPARATOR; <$handle> };
+    close $handle or croak;
+    my $next = $file_content;
+
+    # Define pattern for finding three types of newlines
+    my $unix            = qr/(?<![\x0d])[\x0a](?![\x0d])/msx;
+    my $apple           = qr/(?<![\x0a])[\x0d](?![\x0a])/msx;
+    my $dos             = qr/(?<![\x0d])[\x0d][\x0a](?![\x0a])/msx;
+    my $newline_pattern = qr/$unix|$apple|$dos/msx;
+
+    # Replace newline in file with whatever the current system uses
+    $file_content =~ s/$newline_pattern/$INPUT_RECORD_SEPARATOR/msxg;
+
+    # extract fields from room entry from data file
+    my $room_pattern = qr{
+        \s+(-?\d+)
+        \s+(-?\d+)
+        \s+(-?\d+)
+        \s+(-?\d+)
+        \s+(-?\d+)
+        \s+(-?\d+)
+        \s*"([^"]*)"
+        (.*)
+    }msx;
+
+    # extract fields from object entry
+    my $object_pattern = qr{
+        \s*\"([^"]*)"
+        \s*(-?\d+)
+        (.*)
+    }msx;
+
+    # extract data from a verb or a noun
+    my $word_pattern = qr{
+        \s*"([*]?[^"]*?)"
+        (.*)
+    }msx;
+
+    # extract data from a general text field
+    my $text_pattern = qr{
+        \s*"([^"]*)"
+        (.*)
+    }msx;
+
+    # extract a numerical value
+    my $number_pattern = qr{
+        \s*(-?\d+)
+        (.*)
+    }msx;
+
+    ( $game_bytes,          $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_objects,   $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_actions,   $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_words,     $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_rooms,     $next ) = $next =~ /$number_pattern/msx;
+    ( $max_objects_carried, $next ) = $next =~ /$number_pattern/msx;
+    ( $starting_room,       $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_treasures, $next ) = $next =~ /$number_pattern/msx;
+    ( $word_length,         $next ) = $next =~ /$number_pattern/msx;
+    ( $time_limit,          $next ) = $next =~ /$number_pattern/msx;
+    ( $number_of_messages,  $next ) = $next =~ /$number_pattern/msx;
+    ( $treasure_room_id,    $next ) = $next =~ /$number_pattern/msx;
 
     # Actions
     {
@@ -812,8 +864,11 @@ sub load_game_data_file {
         while ( $action_id <= $number_of_actions ) {
             my $action_id_entry = 0;
             while ( $action_id_entry < $ACTION_ENTRIES ) {
-                $action_data[$action_id][$action_id_entry] =
-                  read_number($handle);
+
+                # $action_data[$action_id][$action_id_entry] =
+                #   read_number($handle);
+                ( $action_data[$action_id][$action_id_entry], $next ) =
+                  $next =~ /$number_pattern/msx;
                 $action_id_entry++;
             }
             $action_id++;
@@ -824,7 +879,8 @@ sub load_game_data_file {
     {
         my $word = 0;
         while ( $word < ( ( $number_of_words + 1 ) * 2 ) ) {
-            my $input = read_string($handle);
+            my $input;
+            ( $input, $next ) = $next =~ /$word_pattern/msx;
             $list_of_verbs_and_nouns[ int( $word / 2 ) ][ $word % 2 ] = $input;
             $word++;
         }
@@ -834,33 +890,21 @@ sub load_game_data_file {
     {
         my $room = 0;
         while ( $room <= $number_of_rooms ) {
-            my $current_direction = 0;
-            while ( $current_direction < $DIRECTION_NOUNS ) {
-                $room_exit[$room][$current_direction] = <$handle>;
-                chomp $room_exit[$room][$current_direction];
-                $current_direction++;
-            }
-
-            $room_description[$room] = <$handle>;
-            while ( $room_description[$room] !~ /\"\s*$/msx ) {
-                $room_description[$room] .= <$handle>;
-            }
-            $room_description[$room] =~ s/\"//msxg;
+            (
+                $room_exit[$room][0],     $room_exit[$room][1],
+                $room_exit[$room][2],     $room_exit[$room][3],
+                $room_exit[$room][4],     $room_exit[$room][5],
+                $room_description[$room], $next
+            ) = $next =~ /$room_pattern/msx;
             $room++;
         }
     }
-    chomp @room_description;
 
     # Messages
     {
         my $current_message = 0;
         while ( $current_message <= $number_of_messages ) {
-            $message[$current_message] = <$handle>;
-            while ( $message[$current_message] !~ /"(?:.|\n)*"/msx ) {
-                $message[$current_message] .= <$handle>;
-            }
-            $message[$current_message] =~ s/\"//msxg;
-            chomp $message[$current_message];
+            ( $message[$current_message], $next ) = $next =~ /$text_pattern/msx;
             $current_message++;
         }
     }
@@ -869,16 +913,8 @@ sub load_game_data_file {
     {
         my $object = 0;
         while ( $object <= $number_of_objects ) {
-            my $temp_string = <$handle>;
-            while ( $temp_string !~ /\"\s+-?\d+\s*$/msx ) {
-                $temp_string .= <$handle>;
-            }
-            if ( $temp_string =~ /^\s*\"((?:.|\n)*)\"\s+(-?\d+)/msx ) {
-                $object_description[$object] = $1;
-                $object_location[$object]    = $2;
-            }
-            $object_location[$object] += 0;
-
+            ( $object_description[$object], $object_location[$object], $next )
+              = $next =~ /$object_pattern/msx;
             $object_original_location[$object] = $object_location[$object];
             $object++;
         }
@@ -888,35 +924,35 @@ sub load_game_data_file {
     {
         my $action_counter = 0;
         while ( $action_counter <= $number_of_actions ) {
-            my $action_comment = <$handle>;
-            chomp $action_comment;
-            push @action_description, $action_comment;
+            ( $action_description[$action_counter], $next ) =
+              $next =~ /$text_pattern/msx;
             $action_counter++;
         }
     }
-    $adventure_version = read_number($handle);    # Interpreter version
-    $adventure_number  = read_number($handle);    # Adventure number
+
+    ( $adventure_version, $next ) =
+      $next =~ /$number_pattern/msx;    # Interpreter version
+    ( $adventure_number, $next ) =
+      $next =~ /$number_pattern/msx;    # Adventure number
 
     # Replace Ascii 96 with Ascii 34 in output text strings
     foreach ( ( @object_description, @message, @room_description ) ) {
         s/`/"/msxg;
     }
 
-    close $handle or croak;
-
     return 1;
 }
 
 sub cls {
-    print "\e[2J"   or croak;                     # Clear the screen
-    print "\e[0;0H" or croak;                     # Jump to coordinate 0,0
+    print "\e[2J"   or croak;           # Clear the screen
+    print "\e[0;0H" or croak;           # Jump to coordinate 0,0
     return $TRUE;
 }
 
-sub read_number {                                 # Clear away garbage
+sub read_number {                       # Clear away garbage
     my $handle = shift;
     my $temp   = <$handle>;
-    $temp += 0;                                   # Cast the string to a number
+    $temp += 0;                         # Cast the string to a number
     return $temp;
 }
 
@@ -943,7 +979,7 @@ sub extract_words {
     if ( !defined $extracted_input_words[0] ) {
         $extracted_input_words[0] = q{};
     }
-    
+
     # Set noun to blank, if not defined
     if ( scalar @extracted_input_words < 2 ) {
         $extracted_input_words[1] = q{};
@@ -1257,8 +1293,8 @@ sub execute_commands {
                   $command_or_display_message - $MESSAGE_1_END - 1;
 
                 # Launch execution of action commands
-                &{ $command_function[$command_code] }( $action_id,
-                    \$continue_executing_commands );
+                &{ $command_function[$command_code] }
+                  ( $action_id, \$continue_executing_commands );
             }
         }
     }
@@ -1277,6 +1313,7 @@ sub evaluate_conditions {
 
         if ( !&{ $condition_function[$condition_code] }($condition_parameter) )
         {
+
             # Stop evaluating conditions if false. One fails all.
             $evaluation_status = 0;
             last;
