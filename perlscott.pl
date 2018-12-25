@@ -864,9 +864,6 @@ sub load_game_data_file {
         while ( $action_id <= $number_of_actions ) {
             my $action_id_entry = 0;
             while ( $action_id_entry < $ACTION_ENTRIES ) {
-
-                # $action_data[$action_id][$action_id_entry] =
-                #   read_number($handle);
                 ( $action_data[$action_id][$action_id_entry], $next ) =
                   $next =~ /$number_pattern/msx;
                 $action_id_entry++;
