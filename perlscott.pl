@@ -4,6 +4,7 @@ use warnings;
 use Readonly;
 use Carp;
 use English qw( -no_match_vars );
+use Getopt::Long;
 our $VERSION = '1.0.0';
 
 Readonly::Scalar my $ACTION_COMMAND_OFFSET    => 6;
@@ -62,6 +63,8 @@ my ( @object_description, @message, @extracted_input_words,
 
 my ( @action_data, @action_description, @object_original_location,
     @object_location, @found_word, @room_exit, @status_flag );
+
+my $command_handle;
 
 $cont_flag = 0;
 
@@ -569,6 +572,9 @@ $counter_register         = 0;
 $status_flag[$FLAG_NIGHT] = $FALSE;                            # Day flag???
 $alternate_counter[$COUNTER_TIME_LIMIT] = $time_limit;  # Set time limit counter
 
+# Optionally use a file containing commands as input
+$command_handle = get_command_file();
+
 show_intro();                                           # Show intro
 show_room_description();                                # Show room
 
@@ -580,7 +586,12 @@ run_actions( $found_word[0], 0 );
 # Main keyboard command input loop
 while (1) {
     print "Tell me what to do\n" or croak;
-    $keyboard_input_2 = <>;
+
+    # If command file has ended, return control to STDIN
+    if ( eof $command_handle ) {
+        $command_handle = *STDIN;
+    }
+    $keyboard_input_2 = <$command_handle>;
     chomp $keyboard_input_2;
     print "\n" or croak;
 
@@ -607,6 +618,26 @@ while (1) {
             run_actions( $found_word[0], $found_word[1] );
         }
     }
+}
+
+sub get_command_file {
+    my $command_handle;
+    my $command_file;
+    GetOptions( 'commandfile=s' => \$command_file )
+      or croak "Error in command line arguments\n";
+
+    if ( !defined $command_file ) {
+        $command_handle = *STDIN;
+    }
+    else {
+        if ( -e $command_file ) {
+            open $command_handle, '<', $command_file or croak;
+        }
+        else {
+            croak "file \"$command_file\" not found";
+        }
+    }
+    return $command_handle;
 }
 
 sub strip_noun_from_object_description {
@@ -653,7 +684,7 @@ You will at times need special items to do things: But i'm sure you'll be a good
 END_MESSAGE
     print $intro_message or croak;
 
-    $keyboard_input = <>;
+    $keyboard_input = <$command_handle>;
     cls();
     return 1;
 }
@@ -1024,7 +1055,7 @@ sub extract_words {
 sub save_game {
 
     print "Name of save file:\n" or croak;
-    my $save_filename = <>;
+    my $save_filename = <$command_handle>;
     chomp $save_filename;
     my @save_data;
 
@@ -1048,7 +1079,7 @@ sub save_game {
 
 sub load_game {
     print "Name of save file:\n" or croak;
-    my $save_filename = <>;
+    my $save_filename = <$command_handle>;
     chomp $save_filename;
     if ( !-e $save_filename ) {
         print "Couldn't load \"$save_filename\". Doesn't exist!\n" or croak;
