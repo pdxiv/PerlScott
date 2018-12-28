@@ -64,7 +64,7 @@ my ( @object_description, @message, @extracted_input_words,
 my ( @action_data, @action_description, @object_original_location,
     @object_location, @found_word, @room_exit, @status_flag );
 
-my $command_handle;
+my ( $command_in_handle, $command_out_handle );
 
 $cont_flag = 0;
 
@@ -561,7 +561,16 @@ my @command_function = (
 
 $command_or_display_message = 0;
 
-load_game_data_file();    # Load game data file
+# Get commandline options
+( $command_in_handle, $command_out_handle ) = commandline_options();
+
+# Load game data file, if specified
+if ( scalar @ARGV ) {
+    load_game_data_file();
+}
+else {
+    exit 0;
+}
 
 # Initialize values
 $current_room = $starting_room;    # Set current room to starting room
@@ -571,9 +580,6 @@ $counter_register         = 0;
 @status_flag              = (0) x $STATUS_FLAGS;
 $status_flag[$FLAG_NIGHT] = $FALSE;                            # Day flag???
 $alternate_counter[$COUNTER_TIME_LIMIT] = $time_limit;  # Set time limit counter
-
-# Optionally use a file containing commands as input
-$command_handle = get_command_file();
 
 show_intro();                                           # Show intro
 show_room_description();                                # Show room
@@ -587,11 +593,7 @@ run_actions( $found_word[0], 0 );
 while (1) {
     print "Tell me what to do\n" or croak;
 
-    # If command file has ended, return control to STDIN
-    if ( eof $command_handle ) {
-        $command_handle = *STDIN;
-    }
-    $keyboard_input_2 = <$command_handle>;
+    $keyboard_input_2 = get_command_input();
     chomp $keyboard_input_2;
     print "\n" or croak;
 
@@ -601,7 +603,6 @@ while (1) {
         }
     }
     else {
-
         extract_words();
 
         my $undefined_words_found = ( $found_word[0] < 1 )
@@ -620,24 +621,68 @@ while (1) {
     }
 }
 
-sub get_command_file {
-    my $command_handle;
-    my $command_file;
-    GetOptions( 'commandfile=s' => \$command_file )
-      or croak "Error in command line arguments\n";
+sub get_command_input {
+    my $input_data;
 
-    if ( !defined $command_file ) {
-        $command_handle = *STDIN;
+    # If command file has ended, return control to STDIN
+    if ( eof $command_in_handle ) {
+        $command_in_handle = *STDIN;
+    }
+
+    $input_data = <$command_in_handle>;
+
+    # If a command output file is open, write to it
+    if ( defined $command_out_handle ) {
+        print $command_out_handle $input_data;
+    }
+    return $input_data;
+}
+
+sub commandline_options {
+    my $in_handle;
+    my $out_handle;
+    my $input;
+    my $output;
+    my $flag_help;
+    my @return;    # Return input and output handles as an array
+    GetOptions(
+        'i|input=s'  => \$input,
+        'o|output=s' => \$output,
+        'h|help'     => \$flag_help
+    ) or croak "Error in commandline arguments\n";
+
+    if ($flag_help) {
+        print <<'END_MESSAGE';
+Usage: perlscott.pl [OPTION]... game_data_file
+Scott Adams adventure game interpreter
+
+-i, --input    Command input file
+-o, --output   Command output file
+-h, --help     Display this help and exit
+END_MESSAGE
+        exit 0;
+    }
+
+    # If no command input file defined, use STDIN for input
+    if ( !defined $input ) {
+        $in_handle = *STDIN;
     }
     else {
-        if ( -e $command_file ) {
-            open $command_handle, '<', $command_file or croak;
+        if ( -e $input ) {
+            open $in_handle, q{<}, $input or croak;
         }
         else {
-            croak "file \"$command_file\" not found";
+            croak "file \"$input\" not found";
         }
     }
-    return $command_handle;
+    push @return, $in_handle;
+
+    # If command output file defined, write output to it
+    if ( defined $output ) {
+        open $out_handle, q{>}, $output or croak;
+    }
+    push @return, $out_handle;
+    return @return;
 }
 
 sub strip_noun_from_object_description {
@@ -684,7 +729,7 @@ You will at times need special items to do things: But i'm sure you'll be a good
 END_MESSAGE
     print $intro_message or croak;
 
-    $keyboard_input = <$command_handle>;
+    $keyboard_input = get_command_input();
     cls();
     return 1;
 }
@@ -1055,7 +1100,7 @@ sub extract_words {
 sub save_game {
 
     print "Name of save file:\n" or croak;
-    my $save_filename = <$command_handle>;
+    my $save_filename = get_command_input();
     chomp $save_filename;
     my @save_data;
 
@@ -1079,7 +1124,7 @@ sub save_game {
 
 sub load_game {
     print "Name of save file:\n" or croak;
-    my $save_filename = <$command_handle>;
+    my $save_filename = get_command_input();
     chomp $save_filename;
     if ( !-e $save_filename ) {
         print "Couldn't load \"$save_filename\". Doesn't exist!\n" or croak;
