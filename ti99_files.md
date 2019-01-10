@@ -6,7 +6,7 @@ This is an attempt to document the "FIAD" files available on The Interactive Fic
 
 Some of the information derived from the Bunyon interpreter code (<http://www.ifarchive.org/if-archive/scott-adams/interpreters/bunyon/bunyon-0.3.tar.bz2>).
 
-The focus of the documentation is to get enough data to enable conversion of the "TIAD" files to a TRS-80 text-based format, or to be able to adapt an existing interpreter to read these files. Any data in the files that is deemed irrelevant for actually playing the game files is ignored by this document.
+The focus of the documentation is to get enough data to enable conversion of the "FIAD" files to a TRS-80 text-based format, or to be able to adapt an existing interpreter to read these files. Any data in the files that is deemed irrelevant for actually playing the game files is ignored by this document.
 
 ## Data header
 
