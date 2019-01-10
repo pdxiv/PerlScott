@@ -39,8 +39,7 @@ Readonly::Scalar my $STATUS_FLAGS             => 32;
 Readonly::Scalar my $MINIMUM_COUNTER_VALUE    => -1;
 Readonly::Array my @DIRECTION_NOUN_TEXT => qw( NORTH SOUTH EAST WEST UP DOWN );
 
-my $game_file = shift @ARGV;
-
+my $game_file; # Filename of game data file
 my ( $keyboard_input, $keyboard_input_2 );
 my (
     $carried_objects,     $command_or_display_message,
@@ -566,6 +565,7 @@ $command_or_display_message = 0;
 
 # Load game data file, if specified
 if ( scalar @ARGV ) {
+    $game_file = shift @ARGV;
     load_game_data_file();
 }
 else {
