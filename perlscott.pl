@@ -39,7 +39,7 @@ Readonly::Scalar my $STATUS_FLAGS             => 32;
 Readonly::Scalar my $MINIMUM_COUNTER_VALUE    => -1;
 Readonly::Array my @DIRECTION_NOUN_TEXT => qw( NORTH SOUTH EAST WEST UP DOWN );
 
-my $game_file; # Filename of game data file
+my $game_file;    # Filename of game data file
 my ( $keyboard_input, $keyboard_input_2 );
 my (
     $carried_objects,     $command_or_display_message,
@@ -569,7 +569,7 @@ if ( scalar @ARGV ) {
     load_game_data_file();
 }
 else {
-    exit 0;
+    commandline_help();
 }
 
 # Initialize values
@@ -638,6 +638,18 @@ sub get_command_input {
     return $input_data;
 }
 
+sub commandline_help {
+    print <<'END_MESSAGE';
+Usage: perlscott.pl [OPTION]... game_data_file
+Scott Adams adventure game interpreter
+
+-i, --input    Command input file
+-o, --output   Command output file
+-h, --help     Display this help and exit
+END_MESSAGE
+    exit 0;
+}
+
 sub commandline_options {
     my $in_handle;
     my $out_handle;
@@ -652,15 +664,7 @@ sub commandline_options {
     ) or croak "Error in commandline arguments\n";
 
     if ($flag_help) {
-        print <<'END_MESSAGE';
-Usage: perlscott.pl [OPTION]... game_data_file
-Scott Adams adventure game interpreter
-
--i, --input    Command input file
--o, --output   Command output file
--h, --help     Display this help and exit
-END_MESSAGE
-        exit 0;
+        commandline_help();
     }
 
     # If no command input file defined, use STDIN for input
