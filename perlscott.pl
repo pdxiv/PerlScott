@@ -64,8 +64,25 @@ my ( @action_data, @action_description, @object_original_location,
     @object_location, @found_word, @room_exit, @status_flag );
 
 my ( $command_in_handle, $command_out_handle );
+my $flag_debug;
 
 $cont_flag = 0;
+
+# Debugging information
+my @condition_name = (
+    'Par', 'HAS',  'IN/W',  'AVL',  'IN',   '-IN/W', '-HAVE', '-IN',
+    'BIT', '-BIT', 'ANY',   '-ANY', '-AVL', '-RM0',  'RM0',   'CT<=',
+    'CT>', 'ORIG', '-ORIG', 'CT=',
+);
+my @command_name = (
+    'GETx',  'DROPx',  'GOTOy', 'x->RM0', 'NIGHT', 'DAY',
+    'SETz',  'x->RM0', 'CLRz',  'DEAD',   'x->y',  'FINI',
+    'DspRM', 'SCORE',  'INV',   'SET0',   'CLR0',  'FILL',
+    'CLS',   'SAVE',   'EXx,x', 'CONT',   'AGETx', 'BYx<-x',
+    'DspRM', 'CT-1',   'DspCT', 'CT<-n',  'EXRM0', 'EXm,CT',
+    'CT+n',  'CT-n',   'SAYw',  'SAYwCR', 'SAYCR', 'EXc,CR',
+    'DELAY',
+);
 
 # Code for all the action conditions
 my @condition_function = (
@@ -561,7 +578,8 @@ my @command_function = (
 $command_or_display_message = 0;
 
 # Get commandline options
-( $command_in_handle, $command_out_handle ) = commandline_options();
+( $command_in_handle, $command_out_handle, $flag_debug ) =
+  commandline_options();
 
 # Load game data file, if specified
 if ( scalar @ARGV ) {
@@ -591,6 +609,9 @@ run_actions( $found_word[0], 0 );
 
 # Main keyboard command input loop
 while (1) {
+    print_debug( join( q{ }, @status_flag ),       37 );
+    print_debug( join( q{ }, @alternate_counter ), 37 );
+
     print "Tell me what to do\n" or croak;
 
     $keyboard_input_2 = get_command_input();
@@ -645,6 +666,7 @@ Scott Adams adventure game interpreter
 
 -i, --input    Command input file
 -o, --output   Command output file
+-d, --debug    Show game debugging info
 -h, --help     Display this help and exit
 END_MESSAGE
     exit 0;
@@ -660,6 +682,7 @@ sub commandline_options {
     GetOptions(
         'i|input=s'  => \$input,
         'o|output=s' => \$output,
+        'd|debug'    => \$flag_debug,
         'h|help'     => \$flag_help
     ) or croak "Error in commandline arguments\n";
 
@@ -685,7 +708,7 @@ sub commandline_options {
     if ( defined $output ) {
         open $out_handle, q{>}, $output or croak;
     }
-    push @return, $out_handle;
+    push @return, $out_handle, $flag_debug;
     return @return;
 }
 
@@ -1184,18 +1207,26 @@ sub run_actions {
 
         # CONT action
         if ( $cont_flag && ( $action_verb == 0 ) && ( $action_noun == 0 ) ) {
+            print_debug(
+"Action $current_action. verb $action_verb, noun $action_noun (CONT $cont_flag), \"$action_description[$current_action]\"",
+                31
+            );
             if ( evaluate_conditions($current_action) ) {
                 execute_commands($current_action);
             }
-            else {
-                # "CONT" condition failures won't reset the CONT flag!
-                # $cont_flag = 0;
-            }
+        }
+        else {
+            # "CONT" condition failures won't reset the CONT flag!
+            $cont_flag = 0;
         }
 
         # AUT action
         if ( $input_verb == 0 ) {
             if ( ( $action_verb == 0 ) && ( $action_noun > 0 ) ) {
+                print_debug(
+"Action $current_action. verb $action_verb, noun $action_noun (CONT $cont_flag), \"$action_description[$current_action]\"",
+                    31
+                );
                 $cont_flag = 0;
                 if ( ( int rand $PERCENT_UNITS ) <= $action_noun ) {
                     if ( evaluate_conditions($current_action) ) {
@@ -1208,6 +1239,16 @@ sub run_actions {
         # Word action
         if ( $input_verb > 0 ) {
             if ( $action_verb == $input_verb ) {
+                print_debug(
+                    "Action $current_action. "
+                      . "verb $action_verb ("
+                      . $list_of_verbs_and_nouns[$action_verb][0] . "), "
+                      . "noun $action_noun ("
+                      . $list_of_verbs_and_nouns[$action_noun][1]
+                      . ") (CONT $cont_flag), "
+                      . "\"$action_description[$current_action]\"",
+                    31
+                );
                 $cont_flag = 0;
                 if ( $action_noun == 0 ) {
                     $found_word = 1;
@@ -1242,6 +1283,15 @@ sub run_actions {
         print "I don't understand your command\n" or croak;
     }
     return $TRUE;
+}
+
+# Subroutine for optionally printing debug messages
+sub print_debug {
+    my $message = shift;
+    my $color   = shift;
+    if ($flag_debug) {
+        print chr(27) . '[' . $color . "mDEBUG: $message" . chr(27) . "[0m\n";
+    }
 }
 
 sub handle_carry_and_drop_verb {
@@ -1350,6 +1400,9 @@ sub execute_commands {
 
             # Code above 102? it's printable text!
             if ( $command_or_display_message >= $MESSAGE_2_START ) {
+                print_debug(
+                    'Command print message ' . $command_or_display_message,
+                    32 );
                 print
                   "$message[$command_or_display_message - $MESSAGE_1_END + 1]\n"
                   or croak;
@@ -1360,6 +1413,9 @@ sub execute_commands {
 
             # Code below 52? it's printable text!
             elsif ( $command_or_display_message <= $MESSAGE_1_END ) {
+                print_debug(
+                    'Command print message ' . $command_or_display_message,
+                    32 );
                 print "$message[$command_or_display_message]\n"
                   or croak;
             }
@@ -1370,6 +1426,11 @@ sub execute_commands {
                   $command_or_display_message - $MESSAGE_1_END - 1;
 
                 # Launch execution of action commands
+                print_debug(
+                    "Command code $command_code "
+                      . $command_name[$command_code],
+                    32
+                );
                 &{ $command_function[$command_code] }
                   ( $action_id, \$continue_executing_commands );
             }
@@ -1387,11 +1448,16 @@ sub evaluate_conditions {
         my $condition_code = get_condition_code( $action_id, $condition );
         my $condition_parameter =
           get_condition_parameter( $action_id, $condition );
-
+        print_debug(
+            "Condition $condition_code "
+              . $condition_name[$condition_code]
+              . " with parameter $condition_parameter",
+            33
+        );
         if ( !&{ $condition_function[$condition_code] }($condition_parameter) )
         {
 
-            # Stop evaluating conditions if false. One fails all.
+            # Stop Conditions if false. One fails all.
             $evaluation_status = 0;
             last;
         }
