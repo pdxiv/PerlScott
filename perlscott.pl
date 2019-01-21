@@ -1457,7 +1457,7 @@ sub evaluate_conditions {
         if ( !&{ $condition_function[$condition_code] }($condition_parameter) )
         {
 
-            # Stop Conditions if false. One fails all.
+            # Stop evaluating conditions if false. One fails all.
             $evaluation_status = 0;
             last;
         }
