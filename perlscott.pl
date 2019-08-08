@@ -720,19 +720,21 @@ sub strip_noun_from_object_description {
 }
 
 sub check_and_change_light_source_status {
-    if ( $object_location[$LIGHT_SOURCE_ID] == $ROOM_INVENTORY ) {
-        $alternate_counter[$COUNTER_TIME_LIMIT]--;
-        if ( $alternate_counter[$COUNTER_TIME_LIMIT] < 0 ) {
-            print "Light has run out\n" or croak;
-            $object_location[$LIGHT_SOURCE_ID] = 0;
-        }
-        elsif (
-            $alternate_counter[$COUNTER_TIME_LIMIT] < $LIGHT_WARNING_THRESHOLD )
-        {
-            print 'Light runs out in '
-              . $alternate_counter[$COUNTER_TIME_LIMIT]
-              . " turns!\n"
-              or croak;
+    if ( exists $object_location[$LIGHT_SOURCE_ID] ) {
+        if ( $object_location[$LIGHT_SOURCE_ID] == $ROOM_INVENTORY ) {
+            $alternate_counter[$COUNTER_TIME_LIMIT]--;
+            if ( $alternate_counter[$COUNTER_TIME_LIMIT] < 0 ) {
+                print "Light has run out\n" or croak;
+                $object_location[$LIGHT_SOURCE_ID] = 0;
+            }
+            elsif ( $alternate_counter[$COUNTER_TIME_LIMIT] <
+                $LIGHT_WARNING_THRESHOLD )
+            {
+                print 'Light runs out in '
+                  . $alternate_counter[$COUNTER_TIME_LIMIT]
+                  . " turns!\n"
+                  or croak;
+            }
         }
     }
     return 1;
