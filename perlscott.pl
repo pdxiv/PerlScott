@@ -630,6 +630,12 @@ while (1) {
           || ( length( $extracted_input_words[1] ) > 0 )
           && ( $found_word[1] < 1 );
 
+        if (   ( $found_word[0] == $VERB_CARRY )
+            or ( $found_word[0] == $VERB_DROP ) )
+        {
+            $undefined_words_found = $FALSE;
+        }
+
         if ($undefined_words_found) {
             print "You use word(s) i don't know\n" or croak;
         }
@@ -1296,6 +1302,19 @@ sub print_debug {
     }
 }
 
+sub noun_is_in_object {
+    my $truncated_noun = substr $global_noun, 0, $word_length;
+    foreach my $description (@object_description) {
+        if ( $description =~ /\/(.*)\/$/msx ) {
+            my $object_noun = lc($1);
+            if ( $object_noun eq $truncated_noun ) {
+                return $TRUE;
+            }
+        }
+    }
+    return $FALSE;
+}
+
 sub handle_carry_and_drop_verb {
     my $input_verb = shift;
     my $input_noun = shift;
@@ -1306,7 +1325,7 @@ sub handle_carry_and_drop_verb {
     }
 
     # If noun is undefined, return with an error text
-    if ( $input_noun == 0 ) {
+    if ( $input_noun == 0 and not noun_is_in_object() ) {
         print "What?\n" or croak;
         return 1;
     }
@@ -1365,10 +1384,14 @@ sub get_or_drop_noun {
 
     # Check if any of the objects in the room has a matching noun
     foreach my $room_object (@objects_in_room) {
+
+        # Only proceed if the object has a noun defined
         if ( $object_description[$room_object] =~ /\/(.*)\/$/msx ) {
 
             # Pick up the first object we find that matches and return
-            if ( $list_of_verbs_and_nouns[$input_noun][1] eq $1 ) {
+            if (   ( $list_of_verbs_and_nouns[$input_noun][1] eq $1 )
+                or ( $1 eq uc( substr $global_noun, 0, $word_length ) ) )
+            {
                 $object_location[$room_object] = $room_destination;
                 print "OK\n" or croak;
                 return $TRUE;
