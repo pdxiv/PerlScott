@@ -26,3 +26,14 @@ Additions:
 - Command for "waiting" for one second (for dramatical effect, presumably)
 - Conditions for determining if an object is in its' starting location or not
 - Hard-coded full direction noun text for games (such as #4 Voodoo Castle) that don't have full text filled in
+
+## Dependencies
+
+To run, PerlScott requires Perl 5, and the following Perl modules to be installed:
+
+- Readonly (in Ubuntu, `sudo apt install libreadonly-perl`)
+- Carp
+- English
+- Getopt::Long
+
+Please note that some, or all of these may already be installed in your system.
