@@ -260,11 +260,14 @@ my @command_function = (
             }
         }
         if ( $carried_objects >= $max_objects_carried ) {
-            print "I've too much too carry. try -take inventory-\n" or croak;
+            if ( $max_objects_carried >= 0 ) {
+                print "I've too much too carry. try -take inventory-\n"
+                  or croak;
 
-            # Stop processing later commands if this one fails
-            my $continue = shift;
-            ${$continue} = $FALSE;
+                # Stop processing later commands if this one fails
+                my $continue = shift;
+                ${$continue} = $FALSE;
+            }
         }
 
         get_command_parameter($action_id);
