@@ -1340,8 +1340,11 @@ sub handle_carry_and_drop_verb {
             }
         }
         if ( $carried_objects >= $max_objects_carried ) {
-            print "I've too much too carry. try -take inventory-\n" or croak;
-            return 1;
+            if ( $max_objects_carried >= 0 ) {
+                print "I've too much too carry. try -take inventory-\n"
+                  or croak;
+                return 1;
+            }
         }
         else {
             if ( get_or_drop_noun( $input_noun, $current_room, $ROOM_INVENTORY )
