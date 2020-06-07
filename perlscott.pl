@@ -1251,31 +1251,32 @@ sub run_actions {
         # Word action
         if ( $input_verb > 0 ) {
             if ( $action_verb == $input_verb ) {
-                if ( $word_action_done == $TRUE ) { return 1; }
-                print_debug(
-                    "Action $current_action. "
-                      . "verb $action_verb ("
-                      . $list_of_verbs_and_nouns[$action_verb][0] . "), "
-                      . "noun $action_noun ("
-                      . $list_of_verbs_and_nouns[$action_noun][1]
-                      . ") (CONT $cont_flag), "
-                      . "\"$action_description[$current_action]\"",
-                    31
-                );
-                $cont_flag = 0;
-                $word_action_done = $TRUE;
-                if ( $action_noun == 0 ) {
-                    $found_word = 1;
-                    if ( evaluate_conditions($current_action) ) {
-                        execute_commands($current_action);
-                        return 1;
+                if ( $word_action_done == $FALSE ) {
+                    print_debug(
+                        "Action $current_action. "
+                          . "verb $action_verb ("
+                          . $list_of_verbs_and_nouns[$action_verb][0] . "), "
+                          . "noun $action_noun ("
+                          . $list_of_verbs_and_nouns[$action_noun][1]
+                          . ") (CONT $cont_flag), "
+                          . "\"$action_description[$current_action]\"",
+                        31
+                    );
+                    $cont_flag = 0;
+                    $word_action_done = $TRUE;
+                    if ( $action_noun == 0 ) {
+                        $found_word = 1;
+                        if ( evaluate_conditions($current_action) ) {
+                            execute_commands($current_action);
+                            return 1;
+                        }
                     }
-                }
-                elsif ( $action_noun == $input_noun ) {
-                    $found_word = 1;
-                    if ( evaluate_conditions($current_action) ) {
-                        execute_commands($current_action);
-                        if ( $cont_flag == 0 ) { return 1; }
+                    elsif ( $action_noun == $input_noun ) {
+                        $found_word = 1;
+                        if ( evaluate_conditions($current_action) ) {
+                            execute_commands($current_action);
+                            if ( $cont_flag == 0 ) { return 1; }
+                        }
                     }
                 }
             }
