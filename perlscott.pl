@@ -1212,6 +1212,7 @@ sub run_actions {
 
     $cont_flag = 0;
     my $current_action = 0;
+    my $word_action_done = $FALSE;
     foreach (@action_data) {
         my $action_verb = get_action_verb($current_action);
         my $action_noun = get_action_noun($current_action);
@@ -1250,6 +1251,7 @@ sub run_actions {
         # Word action
         if ( $input_verb > 0 ) {
             if ( $action_verb == $input_verb ) {
+                if ( $word_action_done == $TRUE ) { return 1; }
                 print_debug(
                     "Action $current_action. "
                       . "verb $action_verb ("
@@ -1261,6 +1263,7 @@ sub run_actions {
                     31
                 );
                 $cont_flag = 0;
+                $word_action_done = $TRUE;
                 if ( $action_noun == 0 ) {
                     $found_word = 1;
                     if ( evaluate_conditions($current_action) ) {
@@ -1272,7 +1275,7 @@ sub run_actions {
                     $found_word = 1;
                     if ( evaluate_conditions($current_action) ) {
                         execute_commands($current_action);
-                        return 1;
+                        if ( $cont_flag == 0 ) { return 1; }
                     }
                 }
             }
@@ -1286,6 +1289,8 @@ sub run_actions {
     if ( handle_carry_and_drop_verb( $input_verb, $input_noun ) ) {
         return $TRUE;
     }
+
+    if ( $word_action_done == $TRUE ) { return $TRUE; }
 
     if ($found_word) {
         print "I can't do that yet\n" or croak;
