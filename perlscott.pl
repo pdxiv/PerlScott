@@ -474,9 +474,10 @@ my @command_function = (
     sub {
         my $action_id = shift;
         get_command_parameter($action_id);
-        my $first_object_location = $object_location[$command_parameter];
+        my $first_object = $command_parameter;
         get_command_parameter($action_id);
-        $object_location[$command_parameter] = $first_object_location;
+        my $second_object = $command_parameter;
+        $object_location[$first_object] = $object_location[$second_object];
     },
 
     # 24 DspRM
@@ -1263,11 +1264,11 @@ sub run_actions {
                         31
                     );
                     $cont_flag = 0;
-                    $word_action_done = $TRUE;
                     if ( $action_noun == 0 ) {
                         $found_word = 1;
                         if ( evaluate_conditions($current_action) ) {
                             execute_commands($current_action);
+                            $word_action_done = $TRUE;
                             return 1;
                         }
                     }
@@ -1275,6 +1276,7 @@ sub run_actions {
                         $found_word = 1;
                         if ( evaluate_conditions($current_action) ) {
                             execute_commands($current_action);
+                            $word_action_done = $TRUE;
                             if ( $cont_flag == 0 ) { return 1; }
                         }
                     }
