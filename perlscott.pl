@@ -1269,7 +1269,7 @@ sub run_actions {
                         if ( evaluate_conditions($current_action) ) {
                             execute_commands($current_action);
                             $word_action_done = $TRUE;
-                            return 1;
+                            if ( $cont_flag == 0 ) { return 1; }
                         }
                     }
                     elsif ( $action_noun == $input_noun ) {
