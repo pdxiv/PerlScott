@@ -1291,8 +1291,10 @@ sub run_actions {
 
     if ( $input_verb == 0 ) { return 1; }
 
-    if ( handle_carry_and_drop_verb( $input_verb, $input_noun ) ) {
-        return $TRUE;
+    if ( !$word_action_done ) {
+        if ( handle_carry_and_drop_verb( $input_verb, $input_noun ) ) {
+            return $TRUE;
+        }
     }
 
     if ( $word_action_done == $TRUE ) { return $TRUE; }
