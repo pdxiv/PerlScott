@@ -7,6 +7,7 @@ use English qw( -no_match_vars );
 use Getopt::Long;
 our $VERSION = '1.0.0';
 
+Readonly::Scalar my $REALLY_BIG_NUMBER        => 32_767;
 Readonly::Scalar my $ACTION_COMMAND_OFFSET    => 6;
 Readonly::Scalar my $ACTION_ENTRIES           => 8;
 Readonly::Scalar my $AUTO                     => 0;
@@ -260,14 +261,11 @@ my @command_function = (
             }
         }
         if ( $carried_objects >= $max_objects_carried ) {
-            if ( $max_objects_carried >= 0 ) {
-                print "I've too much too carry. try -take inventory-\n"
-                  or croak;
+            print "I've too much too carry. try -take inventory-\n" or croak;
 
-                # Stop processing later commands if this one fails
-                my $continue = shift;
-                ${$continue} = $FALSE;
-            }
+            # Stop processing later commands if this one fails
+            my $continue = shift;
+            ${$continue} = $FALSE;
         }
 
         get_command_parameter($action_id);
@@ -602,6 +600,7 @@ $counter_register         = 0;
 @status_flag              = (0) x $STATUS_FLAGS;
 $status_flag[$FLAG_NIGHT] = $FALSE;                            # Day flag???
 $alternate_counter[$COUNTER_TIME_LIMIT] = $time_limit;  # Set time limit counter
+
 
 show_intro();                                           # Show intro
 show_room_description();                                # Show room
@@ -966,6 +965,9 @@ sub load_game_data_file {
     ( $number_of_words,     $next ) = $next =~ /$number_pattern/msx;
     ( $number_of_rooms,     $next ) = $next =~ /$number_pattern/msx;
     ( $max_objects_carried, $next ) = $next =~ /$number_pattern/msx;
+    if ( $max_objects_carried < 0 ) {
+        $max_objects_carried = $REALLY_BIG_NUMBER;
+    }
     ( $starting_room,       $next ) = $next =~ /$number_pattern/msx;
     ( $number_of_treasures, $next ) = $next =~ /$number_pattern/msx;
     ( $word_length,         $next ) = $next =~ /$number_pattern/msx;
