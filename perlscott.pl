@@ -911,7 +911,6 @@ sub load_game_data_file {
     open my $handle, '<', $game_file or croak;
     my $file_content = do { local $INPUT_RECORD_SEPARATOR; <$handle> };
     close $handle or croak;
-    my $next = $file_content;
 
     # Define pattern for finding three types of newlines
     my $unix            = qr/(?<![\x0d])[\x0a](?![\x0d])/msx;
@@ -921,6 +920,8 @@ sub load_game_data_file {
 
     # Replace newline in file with whatever the current system uses
     $file_content =~ s/$newline_pattern/$INPUT_RECORD_SEPARATOR/msxg;
+
+    my $next = $file_content;
 
     # extract fields from room entry from data file
     my $room_pattern = qr{
