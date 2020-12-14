@@ -752,16 +752,20 @@ sub check_and_change_light_source_status {
 sub show_intro {
     cls();
     my $intro_message = <<'END_MESSAGE';
-     *** Welcome ***
+                 *** Welcome ***
 
- Unless told differently you must find *treasures* and-return-them-to-their-proper--place!
+ Unless told differently you must find *TREASURES* 
+and-return-them-to-their-proper--place!
 
 I'm your puppet. Give me english commands that
 consist of a noun and verb. Some examples...
 
-To find out what you're carrying you might say: TAKE INVENTORY to go into a hole you might say: GO HOLE to save current game: SAVE GAME
+To find out what you're carrying you might say: TAKE INVENTORY 
+to go into a hole you might say: GO HOLE 
+to save current game: SAVE GAME
 
-You will at times need special items to do things: But i'm sure you'll be a good adventurer and figure these things out.
+You will at times need special items to do things: But I'm 
+sure you'll be a good adventurer and figure these things out.
 
      Happy adventuring... Hit enter to start
 END_MESSAGE
