@@ -1099,6 +1099,9 @@ sub extract_words {
         $extracted_input_words[0] = q{};
     }
 
+    # Resolve cardinal directions so that entering "U" would result in "GO UP"
+    resolve_go_shortcut();
+
     # Set noun to blank, if not defined
     if ( scalar @extracted_input_words < 2 ) {
         $extracted_input_words[1] = q{};
@@ -1528,4 +1531,50 @@ sub get_condition_parameter {
     my $condition_raw       = $action_data[$action_id][$condition];
     my $condition_parameter = int( $condition_raw / $CONDITION_DIVISOR );
     return $condition_parameter;
+}
+
+sub resolve_go_shortcut {
+    my $entered_input_verb = lc $extracted_input_words[0];
+
+    # Don't make shortcut if input verb matches legitimate word action
+    my %viable_phrases = get_viable_word_actions();
+    foreach my $viable_verb ( keys %viable_phrases ) {
+        my $possible_verb_text = lc $list_of_verbs_and_nouns[$viable_verb][0];
+        my $shortened_verb = substr $entered_input_verb, 0,
+          length $possible_verb_text;
+        if ( $shortened_verb eq $possible_verb_text ) {
+            return 1;
+        }
+    }
+
+    foreach my $direction ( 1 .. $DIRECTION_NOUNS ) {
+        my $direction_noun_text = lc $list_of_verbs_and_nouns[$direction][1];
+        my $shortened_direction = substr $direction_noun_text, 0,
+          length $entered_input_verb;
+        if ( $entered_input_verb eq $shortened_direction ) {
+            $extracted_input_words[0] =
+              lc $list_of_verbs_and_nouns[$VERB_GO][0];
+            $extracted_input_words[1] = $direction_noun_text;
+            return 1;
+        }
+    }
+    return 1;
+}
+
+# Evaluate all conditions in all actions, and save verbs and nouns for the
+# actions with conditions that would succeed
+sub get_viable_word_actions {
+    my %viable_phrases;
+    my $current_action = 0;
+    foreach (@action_data) {
+        my $action_verb = get_action_verb($current_action);
+        my $action_noun = get_action_noun($current_action);
+        if ( $action_verb > 0 ) {
+            if ( evaluate_conditions($current_action) ) {
+                $viable_phrases{$action_verb}{$action_noun} = q{};
+            }
+        }
+        $current_action++;
+    }
+    return %viable_phrases;
 }
