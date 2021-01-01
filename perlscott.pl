@@ -1068,21 +1068,6 @@ sub cls {
     return $TRUE;
 }
 
-sub read_number {                       # Clear away garbage
-    my $handle = shift;
-    my $temp   = <$handle>;
-    $temp += 0;                         # Cast the string to a number
-    return $temp;
-}
-
-sub read_string {
-    my $handle = shift;
-    my $input  = <$handle>;
-    $input =~ s/\"//msxg;
-    chomp $input;
-    return $input;
-}
-
 sub extract_words {
 
     # Input:
