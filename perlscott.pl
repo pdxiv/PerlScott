@@ -659,7 +659,7 @@ while (1) {
 
 # Return a pseudo-random number between 0 and 99
 sub get_prn {
-    $prng_state = ( ( $PRNG_PRIMITIVE_ROOT_MODULO * ( $prng_state + 1 ) % $PRNG_PRIME ) * 1 ) % $VALUES_IN_16_BITS;
+    $prng_state = ( ( $PRNG_PRM * ( $prng_state + 1 ) % $PRNG_PRIME ) * 1 ) % $VALUES_IN_16_BITS;
     return $prng_state % $PERCENT_UNITS;
 }
 
