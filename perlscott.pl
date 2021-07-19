@@ -38,6 +38,10 @@ Readonly::Scalar my $ALTERNATE_ROOM_REGISTERS => 6;
 Readonly::Scalar my $ALTERNATE_COUNTERS       => 9;
 Readonly::Scalar my $STATUS_FLAGS             => 32;
 Readonly::Scalar my $MINIMUM_COUNTER_VALUE    => -1;
+Readonly::Scalar my $VALUES_IN_16_BITS        => 65536;
+Readonly::Scalar my $PRNG_PRIME               => 65537;
+Readonly::Scalar my $PRNG_PRM                 => 75;
+
 Readonly::Array my @DIRECTION_NOUN_TEXT => qw( NORTH SOUTH EAST WEST UP DOWN );
 
 my $game_file;    # Filename of game data file
@@ -68,6 +72,8 @@ my ( $command_in_handle, $command_out_handle );
 my $flag_debug;
 
 $cont_flag = 0;
+
+my $prng_state = time() % 65536;    # Seed pseudo-random number generator
 
 # Debugging information
 my @condition_name = (
@@ -649,6 +655,12 @@ while (1) {
             run_actions( $found_word[0], $found_word[1] );
         }
     }
+}
+
+# Return a pseudo-random number between 0 and 99
+sub get_prn {
+    $prng_state = ( ( $PRNG_PRIMITIVE_ROOT_MODULO * ( $prng_state + 1 ) % $PRNG_PRIME ) * 1 ) % $VALUES_IN_16_BITS;
+    return $prng_state % $PERCENT_UNITS;
 }
 
 sub get_command_input {
@@ -1236,7 +1248,7 @@ sub run_actions {
                     31
                 );
                 $cont_flag = 0;
-                if ( ( int rand $PERCENT_UNITS ) <= $action_noun ) {
+                if ( get_prn() < $action_noun ) {
                     if ( evaluate_conditions($current_action) ) {
                         execute_commands($current_action);
                     }
