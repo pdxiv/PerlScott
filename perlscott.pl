@@ -1533,6 +1533,9 @@ sub get_condition_parameter {
 sub resolve_go_shortcut {
     my $entered_input_verb = lc $extracted_input_words[0];
 
+    # Don't attempt to resolve go shortcuts if input is empty
+    if ( length($entered_input_verb) < 1 ) { return 1; }
+
     # Don't make shortcut if input verb matches legitimate word action
     my %viable_phrases = get_viable_word_actions();
     foreach my $viable_verb ( keys %viable_phrases ) {
